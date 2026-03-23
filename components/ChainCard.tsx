@@ -13,7 +13,6 @@ import {
   formatWalletAge,
   shortenAddress,
 } from "@/lib/utils";
-import ArchetypeLabel from "@/components/ui/ArchetypeLabel";
 import StatBadge from "@/components/ui/StatBadge";
 import ChainBadge from "@/components/ui/ChainBadge";
 import NFTThumbnail from "@/components/ui/NFTThumbnail";
@@ -91,21 +90,82 @@ export default function ChainCard({ card }: ChainCardProps) {
           </div>
         </div>
 
-        {/* Archetype */}
+        {/* ── Archetype — fully inlined so html-to-image never mis-reflows it ── */}
         <div
-          className="rounded-xl p-4 border"
-          style={{ background: `${archConfig.glowColor}08`, borderColor: `${archConfig.glowColor}20` }}
+          style={{
+            background: `${archConfig.glowColor}08`,
+            border: `1px solid ${archConfig.glowColor}25`,
+            borderRadius: "12px",
+            padding: "16px",
+          }}
         >
-          <ArchetypeLabel archetype={card.archetype} size="md" />
-          <p className="text-xs text-white/40 mt-3 leading-relaxed font-body">{archConfig.description}</p>
+          {/* Label row — inline-flex + nowrap guarantees single-line rendering */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              backgroundColor: `${archConfig.glowColor}15`,
+              border: `1px solid ${archConfig.glowColor}30`,
+              borderRadius: "8px",
+              padding: "6px 10px",
+              maxWidth: "100%",
+            }}
+          >
+            {/* Archetype emoji / icon */}
+            <span style={{ fontSize: "16px", lineHeight: 1, flexShrink: 0 }}>
+              {archConfig.emoji ?? "🎭"}
+            </span>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 500,
+                  color: "rgba(255,255,255,0.35)",
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  lineHeight: 1,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Your archetype
+              </span>
+              <span
+                style={{
+                  fontSize: "15px",
+                  fontWeight: 700,
+                  color: archConfig.glowColor,
+                  whiteSpace: "nowrap",  // ← THE KEY FIX: never wraps
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {archConfig.label ?? card.archetype}
+              </span>
+            </div>
+          </div>
+
+          {/* Description */}
+          <p
+            style={{
+              fontSize: "12px",
+              color: "rgba(255,255,255,0.40)",
+              marginTop: "10px",
+              lineHeight: 1.6,
+              letterSpacing: "0.01em",
+            }}
+          >
+            {archConfig.description}
+          </p>
         </div>
 
-        {/* Stats Grid — all unlocked, all visible */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-2.5">
           <StatBadge emoji="⚡" label="Total transactions" value={formatNumber(card.totalTransactions)} />
-          <StatBadge emoji="📅" label="Wallet age" value={formatWalletAge(card.firstTxDate)} />
-          <StatBadge emoji="💸" label="Gas burned" value={formatGas(card)} />
-          <StatBadge emoji="💰" label="Net worth" value={formatNetWorth(card)} />
+          <StatBadge emoji="📅" label="Wallet age"         value={formatWalletAge(card.firstTxDate)} />
+          <StatBadge emoji="💸" label="Gas burned"         value={formatGas(card)} />
+          <StatBadge emoji="💰" label="Net worth"          value={formatNetWorth(card)} />
           <StatBadge
             emoji="📊"
             label="Chains active"
@@ -168,7 +228,7 @@ export default function ChainCard({ card }: ChainCardProps) {
         {(card.governanceVotes > 0 || card.airdropsReceived > 0) && (
           <div className="grid grid-cols-2 gap-2.5">
             {card.governanceVotes > 0 && (
-              <StatBadge emoji="🏛️" label="Governance votes" value={formatNumber(card.governanceVotes)} />
+              <StatBadge emoji="🏛️" label="Governance votes"  value={formatNumber(card.governanceVotes)} />
             )}
             {card.airdropsReceived > 0 && (
               <StatBadge emoji="🪂" label="Airdrops received" value={formatNumber(card.airdropsReceived)} />

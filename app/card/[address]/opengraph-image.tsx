@@ -49,7 +49,7 @@ export default async function OGImage({ params }: PageProps) {
               Your wallet has a story. Now it has a card.
             </div>
             <div style={{ fontSize: "14px", color: "#4DFFD2", marginTop: "8px" }}>
-              chaincard.xyz
+              chaincard-hq.vercel.app
             </div>
           </div>
         </div>
@@ -228,7 +228,7 @@ export default async function OGImage({ params }: PageProps) {
               letterSpacing: "0.05em",
             }}
           >
-            chaincard.xyz
+            chaincard-hq.vercel.app
           </div>
         </div>
 

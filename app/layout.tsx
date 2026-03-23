@@ -7,6 +7,7 @@ import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 import { APP_NAME, APP_TAGLINE, APP_URL } from "@/constants";
 import FeedbackWidget from "@/components/FeedbackWidget";
+import TipWidget from "@/components/TipWidget";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{ backgroundColor: "#080B12", color: "white" }}
       >
         {children}
+        <TipWidget />
         <FeedbackWidget />
         <Analytics />
       </body>

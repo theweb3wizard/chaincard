@@ -91,7 +91,7 @@ export function formatPnl(value: number | null): {
 // ─── Share URL ────────────────────────────────────────────
 
 export function getCardUrl(address: string): string {
-  const base = process.env.NEXT_PUBLIC_APP_URL || "https://chaincard.xyz";
+  const base = process.env.NEXT_PUBLIC_APP_URL || "https://chaincard-hq.vercel.app";
   return `${base}/card/${normalizeAddress(address)}`;
 }
 

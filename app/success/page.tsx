@@ -55,7 +55,7 @@ function SuccessContent() {
           </Link>
         )}
 
-        <p className="text-xs text-white/25 font-mono">chaincard.xyz</p>
+        <p className="text-xs text-white/25 font-mono">chaincard-hq.vercel.app</p>
       </div>
     </main>
   );

@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     twitter: {
       card: "summary_large_image",
       title: `${displayName} is "${archetypeLabel}"`,
-      description: `Check your own on-chain identity at chaincard.xyz`,
+      description: `Check your own on-chain identity at chaincard-hq.vercel.app`,
       images: [`${APP_URL}/card/${normalized}/opengraph-image`],
     },
   };

@@ -9,8 +9,9 @@ import { Download, Loader2 } from "lucide-react";
 interface DownloadButtonProps {
   cardElementId: string;
   filename: string;
-  isUnlocked: boolean;
-  onUnlockClick: () => void;
+  // Legacy props — kept for interface compatibility, not used
+  isUnlocked?: boolean;
+  onUnlockClick?: () => void;
 }
 
 export default function DownloadButton({
@@ -21,43 +22,96 @@ export default function DownloadButton({
 
   async function handleDownload() {
     setIsDownloading(true);
+
     try {
       const { toPng } = await import("html-to-image");
+
       const element = document.getElementById(cardElementId);
-      if (!element) return;
+      if (!element) {
+        console.error(`[DownloadButton] Element #${cardElementId} not found.`);
+        return;
+      }
 
-      // Scroll element into view fully before capture
-      element.scrollIntoView({ behavior: "instant", block: "start" });
+      // ── 1. Measure full content dimensions before touching anything ──────────
+      const fullWidth  = element.scrollWidth;
+      const fullHeight = element.scrollHeight;
 
-      // Wait a tick for scroll + any repaints to settle
-      await new Promise((r) => setTimeout(r, 120));
+      // ── 2. Collect every ancestor that clips overflow ────────────────────────
+      // Walk up the DOM and temporarily disable overflow clipping on any
+      // ancestor that would crop the element during capture.
+      type SavedStyle = { el: HTMLElement; overflow: string; height: string };
+      const savedStyles: SavedStyle[] = [];
 
+      let ancestor = element.parentElement;
+      while (ancestor && ancestor !== document.body) {
+        const cs = window.getComputedStyle(ancestor);
+        const clips =
+          cs.overflow  === "hidden" || cs.overflow  === "scroll" || cs.overflow  === "auto" ||
+          cs.overflowY === "hidden" || cs.overflowY === "scroll" || cs.overflowY === "auto";
+        if (clips) {
+          savedStyles.push({
+            el:       ancestor,
+            overflow: ancestor.style.overflow,
+            height:   ancestor.style.height,
+          });
+          ancestor.style.overflow = "visible";
+          ancestor.style.height   = "auto";
+        }
+        ancestor = ancestor.parentElement;
+      }
+
+      // ── 3. Also temporarily unlock the element itself ────────────────────────
+      const savedElOverflow  = element.style.overflow;
+      const savedElHeight    = element.style.height;
+      const savedElMaxHeight = element.style.maxHeight;
+      element.style.overflow  = "visible";
+      element.style.height    = `${fullHeight}px`;
+      element.style.maxHeight = "none";
+
+      // ── 4. One rAF + setTimeout so the browser repaints with new styles ──────
+      await new Promise<void>((resolve) =>
+        requestAnimationFrame(() => setTimeout(resolve, 50))
+      );
+
+      // ── 5. Capture the live element directly — no cloning ────────────────────
       const dataUrl = await toPng(element, {
-        quality: 1,
-        pixelRatio: 2,
+        quality:         1,
+        pixelRatio:      2,
         backgroundColor: "#0D1117",
-        // Explicitly set dimensions to the element's full scroll size
-        width: element.offsetWidth,
-        height: element.scrollHeight,
+        width:           fullWidth,
+        height:          fullHeight,
         style: {
-          // Remove any overflow clipping during capture
-          overflow: "visible",
+          overflow:     "visible",
           borderRadius: "16px",
         },
         filter: (node) => {
-          // Skip any fixed-position overlays (feedback widget, etc)
           const el = node as HTMLElement;
           if (!el.style) return true;
-          return el.style.position !== "fixed";
+          // Strip fixed-position overlays (feedback widgets, banners, etc.)
+          if (el.style.position === "fixed") return false;
+          if (el.style.display  === "none")  return false;
+          return true;
         },
       });
 
-      const link = document.createElement("a");
+      // ── 6. Restore every style we mutated — in reverse order ─────────────────
+      element.style.overflow  = savedElOverflow;
+      element.style.height    = savedElHeight;
+      element.style.maxHeight = savedElMaxHeight;
+
+      for (const { el, overflow, height } of savedStyles.reverse()) {
+        el.style.overflow = overflow;
+        el.style.height   = height;
+      }
+
+      // ── 7. Trigger download ───────────────────────────────────────────────────
+      const link    = document.createElement("a");
       link.download = `${filename}.png`;
-      link.href = dataUrl;
+      link.href     = dataUrl;
       link.click();
+
     } catch (err) {
-      console.error("Download failed:", err);
+      console.error("[DownloadButton] Capture failed:", err);
     } finally {
       setIsDownloading(false);
     }

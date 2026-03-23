@@ -164,7 +164,7 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="relative z-10 text-center pb-8 text-xs text-white/20 font-mono">
-        {APP_NAME} · chaincard.xyz
+        {APP_NAME} · chaincard-hq.vercel.app
       </footer>
     </main>
   );
