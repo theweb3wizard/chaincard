@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Star, Loader2 } from "lucide-react";
-import { signUp, signIn } from "@/lib/supabase";
+import { signUp, signIn } from "@/lib/supabaseClient";
 
 interface ProUpgradeProps {
   onSuccess?: () => void;
