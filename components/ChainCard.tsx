@@ -141,7 +141,7 @@ export default function ChainCard({ card }: ChainCardProps) {
                   letterSpacing: "-0.01em",
                 }}
               >
-                {archConfig.label ?? card.archetype}
+                {archConfig.label ?? card.archetype} • {card.legitimacyScore}/100
               </span>
             </div>
           </div>

@@ -4,7 +4,7 @@
 
 ChainCard turns any Ethereum wallet address into a beautiful, shareable identity card — your DeFi archetype, on-chain stats, and crypto story, all in one place.
 
-🔗 **Live:** [chaincard.vercel.app](https://chaincard.vercel.app)
+🔗 **Live:** [chaincard.vercel.app](https://chaincard-hq.vercel.app)
 
 ---
 
@@ -57,12 +57,12 @@ cd chaincard
 # 2. Install dependencies
 npm install
 
-# 3. Set up environment variables
-cp .env.local.example .env.local
+# 3. Create a local env file
+copy .env.example .env.local
 # Fill in your keys in .env.local
 
 # 4. Run the Supabase SQL schema
-# Copy the SQL from the section below and run it in your Supabase SQL Editor
+# Use SUPABASE_SCHEMA.sql in the repo or paste it into Supabase SQL Editor
 
 # 5. Start the dev server
 npm run dev
@@ -78,43 +78,14 @@ NEXT_PUBLIC_SUPABASE_URL=           # From supabase.com dashboard
 NEXT_PUBLIC_SUPABASE_ANON_KEY=      # From supabase.com dashboard
 SUPABASE_SERVICE_ROLE_KEY=          # From supabase.com dashboard
 NEXT_PUBLIC_APP_URL=                # http://localhost:3000 for dev
+COPPERX_API_KEY=                    # CopperX server API key
+COPPERX_PRO_PRICE_ID=               # CopperX price ID for ChainCard Pro
+COPPERX_WEBHOOK_SECRET=             # CopperX webhook signing secret
 ```
 
 ### Supabase Schema
 
-Run this SQL in your Supabase project → SQL Editor:
-
-```sql
-CREATE TABLE card_cache (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  address TEXT NOT NULL UNIQUE,
-  ens_name TEXT,
-  card_data JSONB NOT NULL,
-  archetype TEXT NOT NULL,
-  is_unlocked BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '24 hours')
-);
-
-CREATE INDEX idx_card_cache_address ON card_cache(address);
-
-CREATE TABLE feedback (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  email TEXT,
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE OR REPLACE FUNCTION update_updated_at()
-RETURNS TRIGGER AS $$
-BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER card_cache_updated_at
-  BEFORE UPDATE ON card_cache
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-```
+Use `SUPABASE_SCHEMA.sql` in the repo to create the required tables and policies.
 
 ---
 
@@ -144,10 +115,12 @@ chaincard/
 ├── app/
 │   ├── card/[address]/     # Card display page + OG image
 │   ├── api/
-│   │   ├── generate/       # Fetches Moralis, computes card, caches
-│   │   ├── card/[address]/ # Serves cached card data
-│   │   └── feedback/       # Stores user feedback
-│   └── success/            # Post-payment success (legacy)
+│   │   ├── generate/            # Fetches Moralis, computes card, caches
+│   │   ├── card/[address]/      # Serves cached card data
+│   │   ├── checkout/            # Creates CopperX checkout sessions
+│   │   ├── verify-payment/      # Verifies CopperX sessions
+│   │   ├── webhooks/copperx/    # Receives CopperX webhook events
+│   │   └── feedback/            # Stores user feedback
 ├── components/
 │   ├── ui/                 # SkeletonCard, StatBadge, ChainBadge, etc.
 │   ├── ChainCard.tsx       # The card itself

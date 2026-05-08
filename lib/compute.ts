@@ -71,6 +71,63 @@ export function computeArchetype(stats: {
   return "FLIPPER";
 }
 
+// ─── Compute Legitimacy Score ─────────────────────────────────────
+export function computeLegitimacyScore(stats: {
+  walletAgeDays: number;
+  totalTransactions: number;
+  uniqueProtocols: number;
+  governanceVotes: number;
+  airdropsReceived: number;
+  totalGasSpentUsd: number;
+  avgHoldDays: number;
+  swapFrequency: number;
+}): number {
+  let score = 0;
+
+  // Wallet age (0-30 points)
+  if (stats.walletAgeDays >= 365 * 3) score += 30; // 3+ years
+  else if (stats.walletAgeDays >= 365 * 2) score += 25;
+  else if (stats.walletAgeDays >= 365) score += 20;
+  else if (stats.walletAgeDays >= 180) score += 15;
+  else if (stats.walletAgeDays >= 90) score += 10;
+  else score += Math.max(0, stats.walletAgeDays / 3); // Up to 10 for 90 days
+
+  // Transaction consistency (0-25 points)
+  if (stats.totalTransactions >= 1000) score += 25;
+  else if (stats.totalTransactions >= 500) score += 20;
+  else if (stats.totalTransactions >= 200) score += 15;
+  else if (stats.totalTransactions >= 50) score += 10;
+  else score += Math.min(10, stats.totalTransactions / 5);
+
+  // Protocol diversity (0-20 points)
+  if (stats.uniqueProtocols >= 20) score += 20;
+  else if (stats.uniqueProtocols >= 10) score += 15;
+  else if (stats.uniqueProtocols >= 5) score += 10;
+  else score += stats.uniqueProtocols * 2;
+
+  // Governance participation (0-15 points)
+  if (stats.governanceVotes >= 20) score += 15;
+  else if (stats.governanceVotes >= 10) score += 10;
+  else if (stats.governanceVotes >= 5) score += 5;
+  else score += stats.governanceVotes;
+
+  // Airdrop history (0-10 points)
+  if (stats.airdropsReceived >= 10) score += 10;
+  else score += stats.airdropsReceived;
+
+  // Gas commitment (bonus 0-5 points)
+  if (stats.totalGasSpentUsd >= 1000) score += 5;
+  else if (stats.totalGasSpentUsd >= 500) score += 3;
+  else if (stats.totalGasSpentUsd >= 100) score += 1;
+
+  // Holding behavior (bonus/penalty 0-5 points)
+  if (stats.avgHoldDays >= 180) score += 5; // Diamond hand bonus
+  else if (stats.avgHoldDays >= 90) score += 3;
+  else if (stats.swapFrequency >= 10) score -= 2; // Flipper penalty
+
+  return Math.min(100, Math.max(0, Math.round(score)));
+}
+
 // ─── Parse wallet history ─────────────────────────────────────────
 export interface ParsedHistory {
   firstTxDate: string | null;
@@ -341,6 +398,17 @@ export function assembleCardStats(params: {
     swapFrequency: parsed.swapFrequency,
   });
 
+  const legitimacyScore = computeLegitimacyScore({
+    walletAgeDays: parsed.walletAgeDays,
+    totalTransactions,
+    uniqueProtocols: parsed.uniqueProtocols,
+    governanceVotes: parsed.governanceVotes,
+    airdropsReceived: parsed.airdropsReceived,
+    totalGasSpentUsd,
+    avgHoldDays: parsed.avgHoldDays,
+    swapFrequency: parsed.swapFrequency,
+  });
+
   return {
     address,
     ensName,
@@ -363,5 +431,6 @@ export function assembleCardStats(params: {
     governanceVotes: parsed.governanceVotes,
     airdropsReceived: parsed.airdropsReceived,
     archetype,
+    legitimacyScore,
   };
 }

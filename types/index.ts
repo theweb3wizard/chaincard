@@ -75,6 +75,7 @@ export interface CardStats {
 
   // Archetype
   archetype: ArchetypeKey;
+  legitimacyScore: number;
 }
 
 // ─── Cached Card (Supabase row) ───────────────────────────────────
@@ -85,9 +86,10 @@ export interface CachedCard {
   card_data: CardStats;
   archetype: ArchetypeKey;
   is_unlocked: boolean;
+  unlocked_at: string | null;
   created_at: string;
   updated_at: string;
-  expires_at: string;
+  expires_at: string | null;
 }
 
 // ─── Moralis Raw Types ────────────────────────────────────────────
