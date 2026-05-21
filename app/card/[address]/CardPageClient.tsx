@@ -12,7 +12,7 @@ import ChainCard from "@/components/ChainCard";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import ShareButton from "@/components/ShareButton";
 import DownloadButton from "@/components/DownloadButton";
-import { Zap, ArrowLeft, RefreshCw } from "lucide-react";
+import { Zap, ArrowLeft, RefreshCw, Bookmark, BookmarkCheck } from "lucide-react";
 
 interface CardPageClientProps {
   address: string;
@@ -25,11 +25,41 @@ export default function CardPageClient({ address, initialCard }: CardPageClientP
   const [isLoading, setIsLoading] = useState(!initialCard);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     if (!initialCard) generateCard();
+    checkIfSaved();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function checkIfSaved() {
+    const saved = localStorage.getItem("chaincard_saved_cards");
+    if (saved) {
+      const cards = JSON.parse(saved);
+      if (cards.some((c: any) => c.address.toLowerCase() === address.toLowerCase())) {
+        setIsSaved(true);
+      }
+    }
+  }
+
+  function handleSaveCard() {
+    if (!card) return;
+    try {
+      const saved = localStorage.getItem("chaincard_saved_cards");
+      let cards = saved ? JSON.parse(saved) : [];
+      if (!isSaved) {
+        cards.push({ address: card.address, ensName: card.ensName, archetype: card.archetype, avatarUrl: card.avatarUrl, timestamp: Date.now() });
+        setIsSaved(true);
+      } else {
+        cards = cards.filter((c: any) => c.address.toLowerCase() !== card.address.toLowerCase());
+        setIsSaved(false);
+      }
+      localStorage.setItem("chaincard_saved_cards", JSON.stringify(cards));
+    } catch (e) {
+      console.error("Failed to save card", e);
+    }
+  }
 
   async function generateCard() {
     setIsLoading(true);
@@ -124,6 +154,14 @@ export default function CardPageClient({ address, initialCard }: CardPageClientP
                   isUnlocked={true}
                   onUnlockClick={() => {}}
                 />
+                <button
+                  onClick={handleSaveCard}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border font-display font-semibold text-sm transition-all duration-150
+                    ${isSaved ? "bg-arc-500/20 border-arc-500/30 text-arc-400" : "bg-white/05 border-white/10 text-white/60 hover:bg-white/10 hover:text-white"}`}
+                >
+                  {isSaved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+                  {isSaved ? "Saved" : "Save Card"}
+                </button>
               </div>
             )}
 

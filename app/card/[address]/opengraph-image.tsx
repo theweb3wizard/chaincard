@@ -3,7 +3,8 @@
 // This file auto-generates the image that appears when a card URL is shared on X/Twitter
 
 import { ImageResponse } from "next/og";
-import { getCachedCard } from "@/lib/supabase";
+import { fetchAllWalletData, getENSAvatarUrl, resolveENS } from "@/lib/moralis";
+import { assembleCardStats } from "@/lib/compute";
 import {
   normalizeAddress,
   shortenAddress,
@@ -25,10 +26,29 @@ interface PageProps {
 export default async function OGImage({ params }: PageProps) {
   const { address } = await params;
   const normalized = normalizeAddress(address);
-  const cached = await getCachedCard(normalized);
+  let cardStats = null;
+  try {
+    const { history, oldestTxDate, netWorth, nativeBalanceEth, pnlSummary, nfts, stats, ensName, ethPrice } = await fetchAllWalletData(normalized);
+    const avatarUrl = ensName ? getENSAvatarUrl(ensName) : null;
+    cardStats = assembleCardStats({
+      address: normalized,
+      ensName,
+      avatarUrl,
+      history,
+      oldestTxDate,
+      netWorthData: netWorth,
+      nativeBalanceEth,
+      pnlSummary,
+      nfts,
+      walletStats: stats,
+      gasEthPrice: ethPrice,
+    });
+  } catch (err) {
+    console.error("Failed to fetch data for OG image", err);
+  }
 
-  // Fallback image if card hasn't been generated yet
-  if (!cached) {
+  // Fallback image if card hasn't been generated yet or failed
+  if (!cardStats) {
     return new ImageResponse(
       (
         <div
@@ -58,8 +78,8 @@ export default async function OGImage({ params }: PageProps) {
     );
   }
 
-  const card = cached.card_data;
-  const archConfig = ARCHETYPES[cached.archetype];
+  const card = cardStats;
+  const archConfig = ARCHETYPES[cardStats.archetype];
   const displayName = card.ensName || shortenAddress(normalized, 5);
 
   return new ImageResponse(

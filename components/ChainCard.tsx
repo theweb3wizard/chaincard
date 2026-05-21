@@ -41,10 +41,12 @@ export default function ChainCard({ card }: ChainCardProps) {
   return (
     <div
       id="chain-card"
-      className="relative w-full max-w-lg mx-auto rounded-2xl overflow-hidden animate-scale-in"
+      className="relative w-full max-w-lg mx-auto rounded-3xl overflow-hidden animate-scale-in border border-white/10"
       style={{
-        background: "linear-gradient(145deg, #0D1117 0%, #161B27 50%, #0D1117 100%)",
-        boxShadow: `0 0 0 1px rgba(255,255,255,0.06), 0 24px 64px rgba(0,0,0,0.7), 0 0 80px ${archConfig.glowColor}12`,
+        background: "rgba(13, 17, 23, 0.65)",
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        boxShadow: `0 0 0 1px rgba(255,255,255,0.05), inset 0 0 32px rgba(255,255,255,0.02), 0 32px 80px rgba(0,0,0,0.8), 0 0 120px ${archConfig.glowColor}25`,
       }}
     >
       {/* Top color strip */}
@@ -93,10 +95,12 @@ export default function ChainCard({ card }: ChainCardProps) {
         {/* ── Archetype — fully inlined so html-to-image never mis-reflows it ── */}
         <div
           style={{
-            background: `${archConfig.glowColor}08`,
-            border: `1px solid ${archConfig.glowColor}25`,
-            borderRadius: "12px",
-            padding: "16px",
+            background: `linear-gradient(135deg, ${archConfig.glowColor}15 0%, ${archConfig.glowColor}05 100%)`,
+            border: `1px solid ${archConfig.glowColor}30`,
+            borderRadius: "16px",
+            padding: "20px",
+            boxShadow: `inset 0 0 20px ${archConfig.glowColor}10`,
+            backdropFilter: "blur(10px)",
           }}
         >
           {/* Label row — inline-flex + nowrap guarantees single-line rendering */}
@@ -149,9 +153,9 @@ export default function ChainCard({ card }: ChainCardProps) {
           {/* Description */}
           <p
             style={{
-              fontSize: "12px",
-              color: "rgba(255,255,255,0.40)",
-              marginTop: "10px",
+              fontSize: "13px",
+              color: "rgba(255,255,255,0.60)",
+              marginTop: "12px",
               lineHeight: 1.6,
               letterSpacing: "0.01em",
             }}

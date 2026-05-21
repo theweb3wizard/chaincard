@@ -1,18 +1,29 @@
-﻿"use client";
+"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import WalletInput from "@/components/WalletInput";
 import { APP_NAME } from "@/constants";
-import { Zap, Star } from "lucide-react";
+import { Zap, ChevronRight } from "lucide-react";
 import DemoCard from "@/components/DemoCard";
-import ProUpgrade from "@/components/ProUpgrade";
 
 export default function HomePage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showProUpgrade, setShowProUpgrade] = useState(false);
+  const [savedCards, setSavedCards] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("chaincard_saved_cards");
+      if (saved) {
+        setSavedCards(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   async function handleGenerate(address: string) {
     setIsLoading(true);
@@ -76,13 +87,6 @@ export default function HomePage() {
           <span className="text-xs text-white/30 font-mono hidden sm:block">
             on-chain identity
           </span>
-          <button
-            onClick={() => setShowProUpgrade(true)}
-            className="px-3 py-1.5 bg-arc-500/10 border border-arc-500/20 rounded-lg text-arc-400 text-xs font-mono hover:bg-arc-500/20 transition-colors"
-          >
-            <Star className="w-3 h-3 inline mr-1" />
-            Upgrade to Pro
-          </button>
         </div>
       </header>
 
@@ -112,11 +116,39 @@ export default function HomePage() {
         <div className="animate-fade-up stagger-6">
           <DemoCard />
         </div>
-      </section>
 
-      {showProUpgrade && (
-        <ProUpgrade onSuccess={() => setShowProUpgrade(false)} />
-      )}
+        {savedCards.length > 0 && (
+          <div className="animate-fade-up stagger-6 mt-16 w-full max-w-2xl text-left">
+            <h3 className="font-display font-semibold text-lg text-white/80 mb-4 border-b border-white/10 pb-2">Your Saved Cards</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {savedCards.map((c: any) => (
+                <Link
+                  key={c.address}
+                  href={`/card/${c.address}`}
+                  className="flex items-center justify-between p-4 rounded-xl border border-white/05 bg-white/02 hover:bg-white/05 hover:border-white/10 transition-all duration-200 group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full border border-white/10 overflow-hidden bg-void-900 flex items-center justify-center text-xs">
+                      {c.avatarUrl ? (
+                        <img src={c.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        "⚡"
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-display font-semibold text-sm text-white/90">
+                        {c.ensName || `${c.address.slice(0, 6)}...${c.address.slice(-4)}`}
+                      </span>
+                      <span className="text-xs text-white/40">{c.archetype}</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-white/20 group-hover:text-white/60 transition-colors" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
     </main>
   );
 }

@@ -5,7 +5,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { isValidAddress, isENSName, normalizeAddress } from "@/lib/utils";
 import { fetchAllWalletData, resolveENS, getENSAvatarUrl } from "@/lib/moralis";
 import { assembleCardStats } from "@/lib/compute";
-import { getCachedCard, setCachedCard } from "@/lib/supabase";
 
 export const maxDuration = 30;
 
@@ -48,16 +47,7 @@ export async function POST(req: NextRequest) {
 
     const normalized = normalizeAddress(address);
 
-    // Return cached card if available
-    const cached = await getCachedCard(normalized);
-    if (cached) {
-      return NextResponse.json({
-        success: true,
-        card: cached.card_data,
-        isUnlocked: cached.is_unlocked,
-        fromCache: true,
-      });
-    }
+
 
     // Fetch all data in parallel
     const {
@@ -89,12 +79,10 @@ export async function POST(req: NextRequest) {
       gasEthPrice: ethPrice,
     });
 
-    await setCachedCard(normalized, cardStats, finalEnsName);
-
     return NextResponse.json({
       success: true,
       card: cardStats,
-      isUnlocked: false,
+      isUnlocked: true,
       fromCache: false,
     });
   } catch (err) {
