@@ -1,6 +1,3 @@
-// LOCATION: chaincard/app/card/[address]/CardPageClient.tsx
-// ACTION: REPLACE entire file
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +9,8 @@ import ChainCard from "@/components/ChainCard";
 import SkeletonCard from "@/components/ui/SkeletonCard";
 import ShareButton from "@/components/ShareButton";
 import DownloadButton from "@/components/DownloadButton";
+import Card3DViewer from "@/components/Card3DViewer";
+  const [show3D, setShow3D] = useState(false);
 import { Zap, ArrowLeft, RefreshCw, Bookmark, BookmarkCheck } from "lucide-react";
 
 interface CardPageClientProps {
@@ -141,7 +140,15 @@ export default function CardPageClient({ address, initialCard }: CardPageClientP
             </div>
 
             <div className="animate-fade-up stagger-2">
-              <ChainCard card={card} />
+              {show3D ? (
+                <Card3DViewer card={card} />
+              ) : (
+                <ChainCard card={card} />
+              )}
+
+              <button onClick={()=>setShow3D(!show3D)} className="mt-2 px-4 py-2 rounded-xl bg-arc-500/20 border border-arc-500/30 text-arc-400 text-sm font-display transition-colors hover:bg-arc-500/30">
+                {show3D ? "Back to Flat" : "View 3D"}
+              </button>
             </div>
 
             {/* Actions — Share + Download only, no paywall */}
