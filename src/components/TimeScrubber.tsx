@@ -1,5 +1,4 @@
 import { useCallback, useRef, useState } from 'react';
-import { useFrame } from '@react-three/fiber';
 import { useStore } from '@/store';
 import { cn } from '@/utils/cn';
 import {
@@ -50,14 +49,14 @@ export default function TimeScrubber() {
     } else {
       setIsPlaying(true);
       const animate = () => {
-        setTimeProgress((prev: number) => {
-          const next = prev + 0.001;
-          if (next >= 1) {
-            setIsPlaying(false);
-            return 1;
-          }
-          return next;
-        });
+        const current = useStore.getState().timeProgress;
+        const next = current + 0.001;
+        if (next >= 1) {
+          setTimeProgress(1);
+          setIsPlaying(false);
+        } else {
+          setTimeProgress(next);
+        }
         animFrameRef.current = requestAnimationFrame(animate);
       };
       animFrameRef.current = requestAnimationFrame(animate);
@@ -66,7 +65,8 @@ export default function TimeScrubber() {
 
   const handleSkip = useCallback((direction: 'back' | 'forward') => {
     const step = direction === 'back' ? -0.05 : 0.05;
-    setTimeProgress((prev: number) => Math.max(0, Math.min(1, prev + step)));
+    const current = useStore.getState().timeProgress;
+    setTimeProgress(Math.max(0, Math.min(1, current + step)));
   }, [setTimeProgress]);
 
   const handleSliderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {

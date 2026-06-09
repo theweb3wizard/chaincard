@@ -190,13 +190,14 @@ async function fetchRecentTransactions(
   try {
     const client = getClient(chainKey);
     const currentBlock = await client.getBlockNumber();
-    const maxBlocks = 500;
-    const startBlock = currentBlock - BigInt(maxBlocks);
-    const allTxs: RawTx[] = [];
 
     const cacheKey = `${address.toLowerCase()}-${chainKey}`;
     const cachedTxs = await getCachedTransactions(cacheKey);
     if (cachedTxs) return cachedTxs;
+
+    const maxBlocks = 100;
+    const startBlock = currentBlock - BigInt(maxBlocks);
+    const allTxs: RawTx[] = [];
 
     const batchSize = 10n;
     for (let b = startBlock; b <= currentBlock; b += batchSize) {
@@ -213,29 +214,29 @@ async function fetchRecentTransactions(
       for (const block of blocks) {
         if (!block) continue;
         for (const tx of block.transactions) {
-          if (typeof tx === 'object' && 'from' in tx) {
-            const txFrom = (tx.from as string).toLowerCase();
-            const txTo = (tx.to as string | undefined)?.toLowerCase() || '';
-            if (txFrom === address.toLowerCase() || txTo === address.toLowerCase()) {
-              const receipt = await client
-                .getTransactionReceipt({ hash: tx.hash as `0x${string}` })
-                .catch(() => null);
-              allTxs.push({
-                hash: tx.hash as string,
-                blockNumber: block.number!,
-                timestamp: Number(block.timestamp),
-                from: txFrom,
-                to: txTo || null,
-                value: tx.value as bigint,
-                gasUsed: receipt?.gasUsed || tx.gas,
-                gasPrice: tx.gasPrice as bigint || 0n,
-                input: tx.input as string,
-                status: receipt?.status === 'success' ? 'success' : 'reverted',
-              });
-            }
-          }
-        }
+          if (typeof tx !== 'object' || !('from' in tx)) continue;
+          const txFrom = (tx.from as string).toLowerCase();
+          const txTo = (tx.to as string | undefined)?.toLowerCase() || '';
+          if (txFrom !== address.toLowerCase() && txTo !== address.toLowerCase()) continue;
 
+          const receipt = await client
+            .getTransactionReceipt({ hash: tx.hash as `0x${string}` })
+            .catch(() => null);
+          allTxs.push({
+            hash: tx.hash as string,
+            blockNumber: block.number!,
+            timestamp: Number(block.timestamp),
+            from: txFrom,
+            to: txTo || null,
+            value: tx.value as bigint,
+            gasUsed: receipt?.gasUsed || tx.gas,
+            gasPrice: tx.gasPrice as bigint || 0n,
+            input: tx.input as string,
+            status: receipt?.status === 'success' ? 'success' : 'reverted',
+          });
+
+          if (allTxs.length >= 200) break;
+        }
         if (allTxs.length >= 200) break;
       }
       if (allTxs.length >= 200) break;
@@ -445,6 +446,9 @@ async function getFirstTransactionDate(
     const client = getClient(chainKey);
     const currentBlock = await client.getBlockNumber();
 
+    const currentTxCount = await client.getTransactionCount({ address, blockNumber: currentBlock });
+    if (currentTxCount === 0) return null;
+
     let low = 0n;
     let high = currentBlock;
     let firstTxBlock: bigint | null = null;
@@ -452,13 +456,8 @@ async function getFirstTransactionDate(
     while (low <= high) {
       const mid = (low + high) / 2n;
       try {
-        const block = await client.getBlock({ blockNumber: mid, includeTransactions: true });
-        const hasTx = block.transactions.some(
-          (tx) =>
-            typeof tx === 'object' && 'from' in tx &&
-            (tx.from as string).toLowerCase() === address.toLowerCase()
-        );
-        if (hasTx) {
+        const txCount = await client.getTransactionCount({ address, blockNumber: mid });
+        if (txCount > 0) {
           firstTxBlock = mid;
           high = mid - 1n;
         } else {
